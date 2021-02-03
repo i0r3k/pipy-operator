@@ -1,5 +1,5 @@
 # pipy-operator
-CRD&amp;Operator for running pipy in k8s.
+CRD and Operator for running pipy in k8s.
 
 ## Quickstart
 
