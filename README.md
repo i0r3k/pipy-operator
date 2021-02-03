@@ -21,7 +21,7 @@ Output while running on k3s, for reference only:
 k3s version v1.20.0+k3s2 (2ea6b163)
 go version go1.15.5
 
-kubectl apply -f etc/cert-manager-v1.1.0.yaml
+[root@crd pipy-operator]#  kubectl apply -f etc/cert-manager-v1.1.0.yaml
 
 [root@crd ~]# kubectl get pods -A
 NAMESPACE      NAME                                      READY   STATUS      RESTARTS   AGE
@@ -35,7 +35,7 @@ cert-manager   cert-manager-6865f45f85-7gjcb             1/1     Running     0  
 cert-manager   cert-manager-cainjector-fdbc9f44-8xv27    1/1     Running     0          9h
 cert-manager   cert-manager-webhook-5d59497545-vdchs     1/1     Running     0          9h
 
-kubectl apply -f artifact/pipy-operator.yaml
+[root@crd pipy-operator]#  kubectl apply -f artifact/pipy-operator.yaml
 
 [root@crd pipy-operator]# kubectl apply -f artifact/pipy-operator.yaml
 Warning: apiextensions.k8s.io/v1beta1 CustomResourceDefinition is deprecated in v1.16+, unavailable in v1.22+; use apiextensions.k8s.io/v1 CustomResourceDefinition
@@ -73,7 +73,7 @@ cert-manager     cert-manager-cainjector-fdbc9f44-8xv27        1/1     Running  
 cert-manager     cert-manager-webhook-5d59497545-vdchs         1/1     Running     0          9h
 flomesh-system   flomesh-controller-manager-55fb9565bb-c46fc   2/2     Running     0          79s
 
-kubectl apply -f config/samples/standalone/001-echo.yaml
+[root@crd pipy-operator]#  kubectl apply -f config/samples/standalone/001-echo.yaml
 
 [root@pipy pipy-operator]# kubectl get pods -A
 NAMESPACE        NAME                                          READY   STATUS      RESTARTS   AGE
