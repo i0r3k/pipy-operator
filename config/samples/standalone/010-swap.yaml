@@ -1,0 +1,50 @@
+apiVersion: flomesh.io/v1
+kind: Proxy
+metadata:
+  name: pipy-010
+spec:
+  mode: Standalone
+  tplMode: Raw
+  replicas: 1
+  image: flomesh/pipy:latest
+  port: 8080
+  config:
+    config.cfg: |
+      pipeline 0.0.0.0:8080
+          decode-http-request
+              variable_protocol = http_protocol
+              variable_headers = http_headers.*
+          #decode-json模块把json stream解析成内存的数据结构；并且会生成json相关的系列event
+          decode-json
+          #clone模块实现了mirror的能力：把buffer复制一份发给另外一个pipeline进行处理，并且这个过程是异步非阻塞的
+          clone
+              to = get_a
+          clone
+              to = get_b
+          #replace模块，把json的dom tree上某个"path"节点的内容替换成"from"的内容
+          replace
+              path = /a
+              from = get_b_out
+          replace
+              path = /b
+              from = get_a_out
+          #encode-json模块把内存的数据结构，编码成了json格式
+          encode-json
+          encode-http-response
+              protocol = ${http_protocol}
+              variable_connection = http_headers.connection
+              variable_keep_alive = http_headers.keep-alive
+
+      pipeline get_a
+          #filter模块用于从json的dom中抽取指定path的节点，放到output buffer中
+          filter
+              path = /a
+          #send模块把buffer中内容写入一个变量
+          send
+              to = get_a_out
+
+      pipeline get_b
+          filter
+              path = /b
+          send
+              to = get_b_out

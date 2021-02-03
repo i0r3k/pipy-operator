@@ -1,0 +1,36 @@
+
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  creationTimestamp: null
+  name: sidecar-injector-webhook-configuration
+webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: pipy-sidecar-injector-service
+      namespace: system
+      path: /inject-flomesh-io-v1-proxy
+  failurePolicy: Fail
+  name: injector.flomesh.kb.io
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - pods
+#    - daemonsets
+#    - replicationcontrollers
+#    - deployments
+#    - replicasets
+#    - statefulsets
+#    - cronjobs
+#    - jobs
+#  namespaceSelector:
+#    matchLabels:
+#      sidecar-injection: enabled

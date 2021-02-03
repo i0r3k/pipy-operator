@@ -1,0 +1,682 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: flomesh-system
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: flomesh-system/flomesh-serving-cert
+    controller-gen.kubebuilder.io/version: v0.2.5
+  name: proxies.flomesh.io
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.mode
+    name: Mode
+    type: string
+  - JSONPath: .spec.tplMode
+    name: TplMode
+    priority: 1
+    type: string
+  - JSONPath: .spec.port
+    name: Port
+    type: integer
+  - JSONPath: .spec.image
+    name: Image
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: Age
+    type: date
+  conversion:
+    strategy: Webhook
+    webhookClientConfig:
+      caBundle: Cg==
+      service:
+        name: flomesh-webhook-service
+        namespace: flomesh-system
+        path: /convert
+  group: flomesh.io
+  names:
+    kind: Proxy
+    listKind: ProxyList
+    plural: proxies
+    shortNames:
+    - prx
+    singular: proxy
+  preserveUnknownFields: false
+  scope: Namespaced
+  subresources: {}
+  validation:
+    openAPIV3Schema:
+      description: Proxy is the Schema for the proxies API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: ProxySpec defines the desired state of Proxy
+          properties:
+            config:
+              additionalProperties:
+                type: string
+              description: Config contains the piped configuration data in case the TemplateMode is Raw. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field.
+              type: object
+            configMountDir:
+              description: ConfigMountDir is the path where the configmap will be mounted Defaults to /etc/pipy
+              type: string
+            configMountFileName:
+              description: ConfigMountFileName is the name of pipy configuration file Defaults to config.cfg
+              type: string
+            image:
+              description: Image is the container image to run.  Image must have a tag. Defaults to flomesh/pipy:latest
+              type: string
+            mode:
+              description: 'FlomeshMode specifies the mode of creating FLomesh topology. Valid values are: - "Standalone" (default): a standalone Flomesh; - "Inbound": works as sidecar and injected into each selected pod, proxy the inbound traffic; - "Outbound": works as sidecar and injected into each selected pod, proxy the outbound traffic; - "Sidecar": works as sidecar and injected into each selected pod, proxy both inbound and outbound traffic; - "Ingress": works as DaemonSet ans expose HostPort, proxy both inbound and outbound traffic;'
+              enum:
+              - Standalone
+              - Inbound
+              - Outbound
+              - Ingress
+              - Sidecar
+              type: string
+            port:
+              description: Number of Port to expose on the host. In Ingress Mode, it's the hostPort. If specified, this must be a valid port number, 0 < x < 65536. Defaults to 8080
+              format: int32
+              maximum: 65535
+              minimum: 1
+              type: integer
+            replicas:
+              description: Replicas is the number of replicas to maintain, it's useless in Ingress Mode Defaults to 1
+              format: int32
+              minimum: 1
+              type: integer
+            tpl:
+              description: Tpl is the built-in template name, will be translated to a valid file path and name transparently
+              type: string
+            tplMode:
+              description: 'TemplateMode specifies the mode of handling piped configuration Valid values are: - "BuiltIn" (default): piped has some pre-configured configuration template to ease the usage, this mode will enable the operator to load the configuration from the image; - "Raw": in some cases the pre-configured configuration is not suitable for the requirements, the raw mode let user provides a complete configuration instead of using the built-in;'
+              enum:
+              - BuiltIn
+              - Raw
+              type: string
+          type: object
+        status:
+          description: ProxyStatus defines the observed state of Proxy
+          properties:
+            healthyReplicas:
+              description: 'INSERT ADDITIONAL STATUS FIELD - define observed state of cluster Important: Run "make" to regenerate code after modifying this file'
+              format: int32
+              type: integer
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: flomesh-leader-election-role
+  namespace: flomesh-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - configmaps/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: flomesh-manager-role
+rules:
+- apiGroups:
+  - apps
+  resources:
+  - daemonsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - flomesh.io
+  resources:
+  - proxies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - flomesh.io
+  resources:
+  - proxies/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - flomesh.io
+  resources:
+  - proxies/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: flomesh-proxy-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: flomesh-metrics-reader
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flomesh-leader-election-rolebinding
+  namespace: flomesh-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: flomesh-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: flomesh-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: flomesh-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: flomesh-manager-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: flomesh-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: flomesh-proxy-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: flomesh-proxy-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: flomesh-system
+---
+apiVersion: v1
+data:
+  config.cfg: |
+    pipeline 0.0.0.0:8080
+        decode-http-request
+            variable_protocol = http_protocol
+            variable_headers = http_headers.*
+        encode-http-response
+            protocol = ${http_protocol}
+            variable_connection = http_headers.connection
+            variable_keep_alive = http_headers.keep-alive
+kind: ConfigMap
+metadata:
+  name: flomesh-pipy-sidecar-configmap
+  namespace: flomesh-system
+---
+apiVersion: v1
+data:
+  pipy-sidecar-cfg.yaml: |
+    containers:
+    - name: pipy-sidecar
+      image: flomesh/pipy:latest
+      imagePullPolicy: Always
+      ports:
+      - containerPort: {{ .ContainerPort }}
+      env:
+      - name: PIPY_PORT
+        value: {{ .PipyPort }}
+      - name: PIPY_TARGET_PORT
+        value: {{ .PipyTargetPort }}
+      command: ["/bin/sh"]
+      args:
+      - -c
+      - >-
+          curl -k -X POST https://flomesh-pipy-cfg-service.flomesh-system/pipy \
+              -H "Content-Type: application/json" \
+              -d "{ \"port\":{{ .PipyPort }}, \"targetPort\":{{ .PipyTargetPort }} }" \
+              -o /config.cfg &&
+          cat /config.cfg &&
+          echo "starting pipy sidecar with config.cfg..." &&
+          /usr/local/bin/pipy /config.cfg
+kind: ConfigMap
+metadata:
+  name: flomesh-sidecar-injector-configmap
+  namespace: flomesh-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: flomesh-controller-manager-metrics-service
+  namespace: flomesh-system
+spec:
+  ports:
+  - name: https
+    port: 8443
+    targetPort: https
+  selector:
+    control-plane: controller-manager
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flomesh-pipy-cfg-service
+  namespace: flomesh-system
+spec:
+  ports:
+  - port: 443
+    targetPort: 8443
+  selector:
+    proxy-cfg: pipy-cfg
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flomesh-pipy-sidecar-injector-service
+  namespace: flomesh-system
+spec:
+  ports:
+  - port: 443
+    targetPort: 7443
+  selector:
+    proxy-injector: pipy-sidecar-injector
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flomesh-webhook-service
+  namespace: flomesh-system
+spec:
+  ports:
+  - port: 443
+    targetPort: 9443
+  selector:
+    control-plane: controller-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: flomesh-controller-manager
+  namespace: flomesh-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  template:
+    metadata:
+      labels:
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=10
+        image: flomesh/kube-rbac-proxy:v0.5.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+      - args:
+        - --metrics-addr=127.0.0.1:8080
+        - --enable-leader-election
+        command:
+        - /manager
+        image: flomesh/pipy-operator:latest
+        name: manager
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    proxy-cfg: pipy-cfg
+  name: flomesh-pipy-cfg
+  namespace: flomesh-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      proxy-cfg: pipy-cfg
+  template:
+    metadata:
+      labels:
+        proxy-cfg: pipy-cfg
+    spec:
+      containers:
+      - args:
+        - -listen-addr=0.0.0.0:8443
+        command:
+        - /proxy-cfg
+        env:
+        - name: GIN_MODE
+          value: release
+        image: flomesh/pipy-cfg-srv:latest
+        name: proxy-cfg
+        ports:
+        - containerPort: 8443
+          name: https
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    proxy-injector: pipy-sidecar-injector
+  name: flomesh-pipy-sidecar-injector
+  namespace: flomesh-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      proxy-injector: pipy-sidecar-injector
+  template:
+    metadata:
+      labels:
+        proxy-injector: pipy-sidecar-injector
+    spec:
+      containers:
+      - args:
+        - --enable-leader-election
+        - -sidecarCfgFile=/etc/webhook/config/pipy-sidecar-cfg.yaml
+        command:
+        - /proxy-injector
+        image: flomesh/pipy-sidecar-injector:latest
+        name: proxy-injector
+        ports:
+        - containerPort: 7443
+          name: injector
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+        - mountPath: /etc/webhook/config
+          name: injector-config
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - configMap:
+          name: flomesh-sidecar-injector-configmap
+        name: injector-config
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: flomesh-serving-cert
+  namespace: flomesh-system
+spec:
+  dnsNames:
+  - flomesh-webhook-service.flomesh-system.svc
+  - flomesh-webhook-service.flomesh-system.svc.cluster.local
+  - flomesh-pipy-sidecar-injector-service.flomesh-system.svc
+  - flomesh-pipy-sidecar-injector-service.flomesh-system.svc.cluster.local
+  - flomesh-pipy-cfg-service.flomesh-system.svc
+  - flomesh-pipy-cfg-service.flomesh-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: flomesh-selfsigned-issuer
+  secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: flomesh-selfsigned-issuer
+  namespace: flomesh-system
+spec:
+  selfSigned: {}
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: flomesh-system/flomesh-serving-cert
+  name: flomesh-mutating-webhook-configuration
+webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: flomesh-webhook-service
+      namespace: flomesh-system
+      path: /mutate-flomesh-io-v1-proxy
+  failurePolicy: Fail
+  name: mproxy.flomesh.kb.io
+  rules:
+  - apiGroups:
+    - flomesh.io
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - proxies
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: flomesh-system/flomesh-serving-cert
+  name: flomesh-sidecar-injector-webhook-configuration
+webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: flomesh-pipy-sidecar-injector-service
+      namespace: flomesh-system
+      path: /inject-flomesh-io-v1-proxy
+  failurePolicy: Fail
+  name: injector.flomesh.kb.io
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - pods
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: flomesh-system/flomesh-serving-cert
+  name: flomesh-validating-webhook-configuration
+webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: flomesh-webhook-service
+      namespace: flomesh-system
+      path: /validate-flomesh-io-v1-proxy
+  failurePolicy: Fail
+  name: vproxy.flomesh.kb.io
+  rules:
+  - apiGroups:
+    - flomesh.io
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - proxies

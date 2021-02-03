@@ -1,0 +1,23 @@
+resources:
+- injector.yaml
+- injector-configmap.yaml
+- manifests.yaml
+- service.yaml
+- pipy-configmap.yaml
+
+configurations:
+- kustomizeconfig.yaml
+
+vars:
+- name: INJECTOR_SERVICE_NAMESPACE # namespace of the service
+  objref:
+    kind: Service
+    version: v1
+    name: pipy-sidecar-injector-service
+  fieldref:
+    fieldpath: metadata.namespace
+- name: INJECTOR_SERVICE_NAME
+  objref:
+    kind: Service
+    version: v1
+    name: pipy-sidecar-injector-service

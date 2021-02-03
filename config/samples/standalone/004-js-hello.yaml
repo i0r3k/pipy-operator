@@ -1,0 +1,26 @@
+apiVersion: flomesh.io/v1
+kind: Proxy
+metadata:
+  name: pipy-004
+spec:
+  mode: Standalone
+  tplMode: Raw
+  replicas: 1
+  image: flomesh/pipy:latest
+  port: 8080
+  config:
+    config.cfg: |
+      #
+      # 相比003-hello示例，004-js-hello采用js模块输出hello字符串
+      #
+      pipeline 0.0.0.0:8080
+          decode-http-request
+              variable_protocol = http_protocol
+              variable_headers = http_headers.*
+          #script模块启动一个quickjs虚拟机，执行soure参数所指定的js脚本
+          script
+              source = hello.js
+          encode-http-response
+              protocol = ${http_protocol}
+              variable_connection = http_headers.connection
+              variable_keep_alive = http_headers.keep-alive

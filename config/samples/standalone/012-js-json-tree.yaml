@@ -1,0 +1,21 @@
+apiVersion: flomesh.io/v1
+kind: Proxy
+metadata:
+  name: pipy-012
+spec:
+  mode: Standalone
+  tplMode: Raw
+  replicas: 1
+  image: flomesh/pipy:latest
+  port: 8080
+  config:
+    config.cfg: |
+      #
+      # 演示使用js脚本，对输入的json产生的event进行处理：通过响应每个json事件，生成了json树。等价于实现JSON.parse()
+      #
+      pipeline 0.0.0.0:8080
+          decode-http-request
+          decode-json
+          script
+              source = json-tree.js
+          encode-http-response

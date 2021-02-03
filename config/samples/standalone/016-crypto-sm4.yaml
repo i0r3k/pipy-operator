@@ -1,0 +1,20 @@
+apiVersion: flomesh.io/v1
+kind: Proxy
+metadata:
+  name: pipy-016
+spec:
+  mode: Standalone
+  tplMode: Raw
+  replicas: 1
+  image: flomesh/pipy:latest
+  port: 8080
+  config:
+    config.cfg: |
+      pipeline 0.0.0.0:8080
+          decode-http-request
+              variable_path = http_path
+          script
+              source = sm4.js
+          encode-http-response
+              status = ${http_status}
+              status_code = ${http_status_code}

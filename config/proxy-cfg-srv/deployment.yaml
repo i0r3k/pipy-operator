@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pipy-cfg
+  namespace: system
+  labels:
+    proxy-cfg: pipy-cfg
+spec:
+  selector:
+    matchLabels:
+      proxy-cfg: pipy-cfg
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        proxy-cfg: pipy-cfg
+    spec:
+      containers:
+      - name: proxy-cfg
+        image: flomesh/pipy-cfg-srv:latest
+        command:
+        - /proxy-cfg
+        args:
+        - -listen-addr=0.0.0.0:8443
+        ports:
+        - containerPort: 8443
+          name: https
+          protocol: TCP
+        env:
+        - name: GIN_MODE
+          value: release
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert
+      terminationGracePeriodSeconds: 10

@@ -1,0 +1,17 @@
+resources:
+- deployment.yaml
+- service.yaml
+
+vars:
+- name: CFG_SERVICE_NAMESPACE # namespace of the service
+  objref:
+    kind: Service
+    version: v1
+    name: pipy-cfg-service
+  fieldref:
+    fieldpath: metadata.namespace
+- name: CFG_SERVICE_NAME
+  objref:
+    kind: Service
+    version: v1
+    name: pipy-cfg-service

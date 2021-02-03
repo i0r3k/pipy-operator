@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pipy-sidecar-injector
+  namespace: system
+  labels:
+    proxy-injector: pipy-sidecar-injector
+spec:
+  selector:
+    matchLabels:
+      proxy-injector: pipy-sidecar-injector
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        proxy-injector: pipy-sidecar-injector
+    spec:
+      containers:
+      - name: proxy-injector
+        image: flomesh/pipy-sidecar-injector:latest
+        command:
+        - /proxy-injector
+        ports:
+        - containerPort: 7443
+          name: injector
+          protocol: TCP
+        args:
+        - --enable-leader-election
+        - -sidecarCfgFile=/etc/webhook/config/pipy-sidecar-cfg.yaml
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+        - name: injector-config
+          mountPath: /etc/webhook/config
+      volumes:
+      - name: injector-config
+        configMap:
+          name: sidecar-injector-configmap
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert
+      terminationGracePeriodSeconds: 10

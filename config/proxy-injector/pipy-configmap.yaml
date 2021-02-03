@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pipy-sidecar-configmap
+  namespace: system
+data:
+  config.cfg: |
+    pipeline 0.0.0.0:8080
+        decode-http-request
+            variable_protocol = http_protocol
+            variable_headers = http_headers.*
+        encode-http-response
+            protocol = ${http_protocol}
+            variable_connection = http_headers.connection
+            variable_keep_alive = http_headers.keep-alive
