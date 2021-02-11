@@ -70,7 +70,7 @@ spec:
               description: Config contains the piped configuration data in case the TemplateMode is Raw. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field.
               type: object
             configMountDir:
-              description: ConfigMountDir is the path where the configmap will be mounted Defaults to /etc/pipy
+              description: ConfigMountDir is the path where the configmap will be mounted Defaults to /etc/pipy/operator
               type: string
             configMountFileName:
               description: ConfigMountFileName is the name of pipy configuration file Defaults to config.cfg
@@ -325,22 +325,6 @@ subjects:
 ---
 apiVersion: v1
 data:
-  config.cfg: |
-    pipeline 0.0.0.0:8080
-        decode-http-request
-            variable_protocol = http_protocol
-            variable_headers = http_headers.*
-        encode-http-response
-            protocol = ${http_protocol}
-            variable_connection = http_headers.connection
-            variable_keep_alive = http_headers.keep-alive
-kind: ConfigMap
-metadata:
-  name: flomesh-pipy-sidecar-configmap
-  namespace: flomesh-system
----
-apiVersion: v1
-data:
   pipy-sidecar-cfg.yaml: |
     containers:
     - name: pipy-sidecar
@@ -353,6 +337,10 @@ data:
         value: {{ .PipyPort }}
       - name: PIPY_TARGET_PORT
         value: {{ .PipyTargetPort }}
+      {{ range $name, $value := .Labels2Envs }}
+      - name: K8S_LABELS.{{ $name }}
+        value: {{ $value }}
+      {{ end }}
       command: ["/bin/sh"]
       args:
       - -c

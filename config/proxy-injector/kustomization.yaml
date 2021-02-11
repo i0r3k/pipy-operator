@@ -3,7 +3,6 @@ resources:
 - injector-configmap.yaml
 - manifests.yaml
 - service.yaml
-- pipy-configmap.yaml
 
 configurations:
 - kustomizeconfig.yaml

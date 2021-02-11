@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
-  name: replicaset-nginx-004
+  name: pipy-sidecar-004
   labels:
     app: guestbook
     tier: frontend

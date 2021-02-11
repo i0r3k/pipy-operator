@@ -1,0 +1,46 @@
+apiVersion: flomesh.io/v1
+kind: Proxy
+metadata:
+  name: pipy-standalone-005
+spec:
+  mode: Standalone
+  tplMode: Raw
+  replicas: 1
+  image: flomesh/pipy:latest
+  port: 6000
+  config:
+    config.cfg: |
+      pipy
+        pipeline :6000
+          decode-http-request
+            prefix = a
+          script
+            source = hello.js
+          encode-http-response
+            prefix = a
+    hello.js: |
+      //
+      // Handles a new session, returns a stream handler for it.
+      //
+
+      export default (output, context) => (
+
+        //
+        // Stream handler
+        //
+
+        input => {
+
+          // On reception of a message end
+          if (input instanceof Event && input.type === 'messageend') {
+
+            // Set 'Content-Type' header
+            context.set('a.response.Content-Type', 'text/plain');
+
+            // Write a hello message down the pipeline
+            output(new Event('messagestart'));
+            output(new Buffer('Hello!\n'));
+            output(new Event('messageend'));
+          }
+        }
+      );

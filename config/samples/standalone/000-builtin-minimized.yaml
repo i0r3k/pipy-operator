@@ -1,13 +1,12 @@
 apiVersion: flomesh.io/v1
 kind: Proxy
 metadata:
-  name: proxy-sample
+  name: pipy-standalone-000
 #  namespace: flomesh-system
 spec:
   mode: "Standalone"
   tplMode: "BuiltIn"
-  #tpl: "minimized"
-  tpl: pipy
+  tpl: "minimized"
   replicas: 1
   image: "flomesh/pipy:latest"
-  port: 8080
+  port: 6000

@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: deployment-tomcat-002
+  name: pipy-sidecar-002
   namespace: flomesh-system
   labels:
     app: tomcat

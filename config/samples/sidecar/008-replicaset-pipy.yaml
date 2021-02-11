@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
-  name: replicaset-nginx-008
+  name: pipy-sidecar-008
   labels:
-    app: pipy-024-serve-static
+    app: pipy-011-serve-static
     tier: frontend
 spec:
   # modify replicas according to your case
@@ -19,8 +19,8 @@ spec:
         flomesh.io/inject: "true"
     spec:
       containers:
-      - name: pipy-024
+      - name: pipy-011
         image: flomesh/pipy:latest
         ports:
-        - containerPort: 8000
-        command: [ "/usr/local/bin/pipy", "/etc/pipy/test/024-serve-static/test.cfg" ]
+        - containerPort: 6000
+        command: [ "/usr/local/bin/pipy", "/etc/pipy/test/011-serve-static/pipy.cfg" ]

@@ -64,7 +64,7 @@ spec:
               type: object
             configMountDir:
               description: ConfigMountDir is the path where the configmap will be
-                mounted Defaults to /etc/pipy
+                mounted Defaults to /etc/pipy/operator
               type: string
             configMountFileName:
               description: ConfigMountFileName is the name of pipy configuration file

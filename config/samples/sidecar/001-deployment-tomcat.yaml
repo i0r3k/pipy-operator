@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: deployment-tomcat-001
+  name: pipy-sidecar-001
   labels:
     app: tomcat
 spec:

@@ -16,6 +16,10 @@ data:
         value: {{ .PipyPort }}
       - name: PIPY_TARGET_PORT
         value: {{ .PipyTargetPort }}
+      {{ range $name, $value := .Labels2Envs }}
+      - name: K8S_LABELS.{{ $name }}
+        value: {{ $value }}
+      {{ end }}
       command: ["/bin/sh"]
       args:
       - -c
