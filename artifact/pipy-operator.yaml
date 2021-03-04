@@ -10,7 +10,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: flomesh-system/flomesh-serving-cert
-    controller-gen.kubebuilder.io/version: v0.2.5
+    controller-gen.kubebuilder.io/version: v0.2.9
   name: proxies.flomesh.io
 spec:
   additionalPrinterColumns:
@@ -44,11 +44,12 @@ spec:
     listKind: ProxyList
     plural: proxies
     shortNames:
-    - prx
+    - px
     singular: proxy
   preserveUnknownFields: false
   scope: Namespaced
-  subresources: {}
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: Proxy is the Schema for the proxies API
@@ -115,6 +116,108 @@ spec:
               description: 'INSERT ADDITIONAL STATUS FIELD - define observed state of cluster Important: Run "make" to regenerate code after modifying this file'
               format: int32
               type: integer
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: flomesh-system/flomesh-serving-cert
+    controller-gen.kubebuilder.io/version: v0.2.9
+  name: proxyprofiles.flomesh.io
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .metadata.creationTimestamp
+    name: Age
+    type: date
+  conversion:
+    strategy: Webhook
+    webhookClientConfig:
+      caBundle: Cg==
+      service:
+        name: flomesh-webhook-service
+        namespace: flomesh-system
+        path: /convert
+  group: flomesh.io
+  names:
+    kind: ProxyProfile
+    listKind: ProxyProfileList
+    plural: proxyprofiles
+    shortNames:
+    - pf
+    singular: proxyprofile
+  preserveUnknownFields: false
+  scope: Cluster
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: ProxyProfile is the Schema for the proxyprofiles API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: ProxyProfileSpec defines the desired state of ProxyProfile
+          properties:
+            config:
+              additionalProperties:
+                type: string
+              description: Config contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field.
+              type: object
+            namespace:
+              description: Namespace ProxyProfile will only match the pods in the namespace otherwise, match pods in all namespaces(in cluster)
+              type: string
+            selector:
+              description: selector is a label query over pods that should be injected
+              properties:
+                matchExpressions:
+                  description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
+                  items:
+                    description: A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+                    properties:
+                      key:
+                        description: key is the label key that the selector applies to.
+                        type: string
+                      operator:
+                        description: operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.
+                        type: string
+                      values:
+                        description: values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - key
+                    - operator
+                    type: object
+                  type: array
+                matchLabels:
+                  additionalProperties:
+                    type: string
+                  description: matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.
+                  type: object
+              type: object
+          type: object
+        status:
+          description: ProxyProfileStatus defines the observed state of ProxyProfile
           type: object
       type: object
   version: v1
@@ -207,6 +310,16 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - pods
   verbs:
   - create
@@ -220,6 +333,18 @@ rules:
   - ""
   resources:
   - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - volumes
   verbs:
   - create
   - delete
@@ -250,6 +375,32 @@ rules:
   - flomesh.io
   resources:
   - proxies/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - flomesh.io
+  resources:
+  - proxyprofiles
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - flomesh.io
+  resources:
+  - proxyprofiles/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - flomesh.io
+  resources:
+  - proxyprofiles/status
   verbs:
   - get
   - patch
@@ -324,40 +475,6 @@ subjects:
   namespace: flomesh-system
 ---
 apiVersion: v1
-data:
-  pipy-sidecar-cfg.yaml: |
-    containers:
-    - name: pipy-sidecar
-      image: flomesh/pipy:latest
-      imagePullPolicy: Always
-      ports:
-      - containerPort: {{ .ContainerPort }}
-      env:
-      - name: PIPY_PORT
-        value: {{ .PipyPort }}
-      - name: PIPY_TARGET_PORT
-        value: {{ .PipyTargetPort }}
-      {{ range $name, $value := .Labels2Envs }}
-      - name: K8S_LABELS.{{ $name }}
-        value: {{ $value }}
-      {{ end }}
-      command: ["/bin/sh"]
-      args:
-      - -c
-      - >-
-          curl -k -X POST https://flomesh-pipy-cfg-service.flomesh-system/pipy \
-              -H "Content-Type: application/json" \
-              -d "{ \"port\":{{ .PipyPort }}, \"targetPort\":{{ .PipyTargetPort }} }" \
-              -o /config.cfg &&
-          cat /config.cfg &&
-          echo "starting pipy sidecar with config.cfg..." &&
-          /usr/local/bin/pipy /config.cfg
-kind: ConfigMap
-metadata:
-  name: flomesh-sidecar-injector-configmap
-  namespace: flomesh-system
----
-apiVersion: v1
 kind: Service
 metadata:
   labels:
@@ -371,18 +488,6 @@ spec:
     targetPort: https
   selector:
     control-plane: controller-manager
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: flomesh-pipy-cfg-service
-  namespace: flomesh-system
-spec:
-  ports:
-  - port: 443
-    targetPort: 8443
-  selector:
-    proxy-cfg: pipy-cfg
 ---
 apiVersion: v1
 kind: Service
@@ -469,54 +574,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    proxy-cfg: pipy-cfg
-  name: flomesh-pipy-cfg
-  namespace: flomesh-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      proxy-cfg: pipy-cfg
-  template:
-    metadata:
-      labels:
-        proxy-cfg: pipy-cfg
-    spec:
-      containers:
-      - args:
-        - -listen-addr=0.0.0.0:8443
-        command:
-        - /proxy-cfg
-        env:
-        - name: GIN_MODE
-          value: release
-        image: flomesh/pipy-cfg-srv:latest
-        name: proxy-cfg
-        ports:
-        - containerPort: 8443
-          name: https
-          protocol: TCP
-        resources:
-          limits:
-            cpu: 100m
-            memory: 30Mi
-          requests:
-            cpu: 100m
-        volumeMounts:
-        - mountPath: /tmp/k8s-webhook-server/serving-certs
-          name: cert
-          readOnly: true
-      terminationGracePeriodSeconds: 10
-      volumes:
-      - name: cert
-        secret:
-          defaultMode: 420
-          secretName: webhook-server-cert
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
     proxy-injector: pipy-sidecar-injector
   name: flomesh-pipy-sidecar-injector
   namespace: flomesh-system
@@ -533,7 +590,7 @@ spec:
       containers:
       - args:
         - --enable-leader-election
-        - -sidecarCfgFile=/etc/webhook/config/pipy-sidecar-cfg.yaml
+        - -sidecarCfgFile=tpl/proxy.tmpl
         command:
         - /proxy-injector
         image: flomesh/pipy-sidecar-injector:latest
@@ -545,20 +602,15 @@ spec:
         resources:
           limits:
             cpu: 100m
-            memory: 30Mi
+            memory: 100Mi
           requests:
             cpu: 100m
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
           readOnly: true
-        - mountPath: /etc/webhook/config
-          name: injector-config
       terminationGracePeriodSeconds: 10
       volumes:
-      - configMap:
-          name: flomesh-sidecar-injector-configmap
-        name: injector-config
       - name: cert
         secret:
           defaultMode: 420
@@ -575,8 +627,6 @@ spec:
   - flomesh-webhook-service.flomesh-system.svc.cluster.local
   - flomesh-pipy-sidecar-injector-service.flomesh-system.svc
   - flomesh-pipy-sidecar-injector-service.flomesh-system.svc.cluster.local
-  - flomesh-pipy-cfg-service.flomesh-system.svc
-  - flomesh-pipy-cfg-service.flomesh-system.svc.cluster.local
   issuerRef:
     kind: Issuer
     name: flomesh-selfsigned-issuer
@@ -615,6 +665,24 @@ webhooks:
     - UPDATE
     resources:
     - proxies
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: flomesh-webhook-service
+      namespace: flomesh-system
+      path: /mutate-flomesh-io-v1-proxyprofile
+  failurePolicy: Fail
+  name: mproxyprofile.flomesh.kb.io
+  rules:
+  - apiGroups:
+    - flomesh.io
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - proxyprofiles
 ---
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
@@ -665,6 +733,23 @@ webhooks:
     operations:
     - CREATE
     - UPDATE
-    - DELETE
     resources:
     - proxies
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: flomesh-webhook-service
+      namespace: flomesh-system
+      path: /validate-flomesh-io-v1-proxyprofile
+  failurePolicy: Fail
+  name: vproxyprofile.flomesh.kb.io
+  rules:
+  - apiGroups:
+    - flomesh.io
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - proxyprofiles
