@@ -1,0 +1,34 @@
+apiVersion: flomesh.io/v1alpha1
+kind: Proxy
+metadata:
+  name: pipy-standalone-003
+spec:
+  mode: Standalone
+  tplMode: Raw
+  replicas: 1
+  image: flomesh/pipy:latest
+  port: 6000
+  config:
+    config.cfg: |
+      pipy
+        pipeline :6000
+          decode-http-request
+            prefix = http
+          decode-json
+          filter
+            path = /a
+            to = a_out
+          filter
+            path = /b
+            to = b_out
+          replace
+            path = /a
+            from = b_out
+          replace
+            path = /b
+            from = a_out
+          encode-json
+          encode-http-response
+            prefix = http
+
+

@@ -45,6 +45,16 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - pods
   verbs:
   - create
@@ -58,6 +68,18 @@ rules:
   - ""
   resources:
   - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - volumes
   verbs:
   - create
   - delete
@@ -88,6 +110,32 @@ rules:
   - flomesh.io
   resources:
   - proxies/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - flomesh.io
+  resources:
+  - proxyprofiles
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - flomesh.io
+  resources:
+  - proxyprofiles/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - flomesh.io
+  resources:
+  - proxyprofiles/status
   verbs:
   - get
   - patch

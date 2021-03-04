@@ -1,0 +1,75 @@
+apiVersion: flomesh.io/v1alpha1
+kind: Proxy
+metadata:
+  name: pipy-standalone-010
+spec:
+  mode: Standalone
+  tplMode: Raw
+  replicas: 1
+  image: flomesh/pipy:latest
+  port: 6000
+  config:
+    config.cfg: |
+      pipy
+        #
+        # Load balanced port
+        #
+        pipeline :6000
+
+          # This script rotates the value of variable ${target}
+          script
+            source = distribute.js
+
+          # Forwards traffic to ${target}
+          proxy-tcp
+            to = ${target}
+
+        #
+        # Mock service on port 8000
+        #
+
+        pipeline :8000
+          decode-http-request
+            prefix = a
+          hello
+            message = Hello from service 8000\n
+          encode-http-response
+            prefix = a
+
+        #
+        # Mock service on port 8001
+        #
+
+        pipeline :8001
+          decode-http-request
+            prefix = a
+          hello
+            message = Hello from service 8001\n
+          encode-http-response
+            prefix = a
+    distribute.js: |
+      import TARGETS from './targets.js';
+      const N = TARGETS.length;
+
+      let i = 0; // Current index of target
+
+      export default (output, context) => (
+        input => {
+
+          // Rotate targets for each session
+          if (input instanceof Event &&
+              input.type === 'sessionstart'
+          ) {
+            i = (i + 1) % N;
+            context.set('target', TARGETS[i]);
+          }
+
+          // Pass down everything
+          output(input);
+        }
+      );
+    targets.js: |
+      export default [
+        '127.0.0.1:8000',
+        '127.0.0.1:8001',
+      ];

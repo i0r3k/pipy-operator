@@ -11,19 +11,37 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-flomesh-io-v1-proxy
+      path: /mutate-flomesh-io-v1alpha1-proxy
   failurePolicy: Fail
   name: mproxy.flomesh.kb.io
   rules:
   - apiGroups:
     - flomesh.io
     apiVersions:
-    - v1
+    - v1alpha1
     operations:
     - CREATE
     - UPDATE
     resources:
     - proxies
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-flomesh-io-v1alpha1-proxyprofile
+  failurePolicy: Fail
+  name: mproxyprofile.flomesh.kb.io
+  rules:
+  - apiGroups:
+    - flomesh.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - proxyprofiles
 
 ---
 apiVersion: admissionregistration.k8s.io/v1beta1
@@ -37,17 +55,34 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-flomesh-io-v1-proxy
+      path: /validate-flomesh-io-v1alpha1-proxy
   failurePolicy: Fail
   name: vproxy.flomesh.kb.io
   rules:
   - apiGroups:
     - flomesh.io
     apiVersions:
-    - v1
+    - v1alpha1
     operations:
     - CREATE
     - UPDATE
-    - DELETE
     resources:
     - proxies
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-flomesh-io-v1alpha1-proxyprofile
+  failurePolicy: Fail
+  name: vproxyprofile.flomesh.kb.io
+  rules:
+  - apiGroups:
+    - flomesh.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - proxyprofiles

@@ -1,0 +1,27 @@
+apiVersion: flomesh.io/v1alpha1
+kind: Proxy
+metadata:
+  name: pipy-ingress-001
+spec:
+  mode: Ingress
+  tplMode: Raw
+  image: flomesh/pipy:latest
+  port: 9090
+  config:
+    config.cfg: |
+      pipy
+        pipeline 0.0.0.0:9090
+            decode-http-request
+                prefix = ctx
+            proxy
+                to = ${ctx.path}
+            encode-http-response
+                prefix = ctx
+
+        pipeline /hello
+            hello
+                message = Hello!\n
+
+        pipeline /test
+            hello
+                message = Test\n

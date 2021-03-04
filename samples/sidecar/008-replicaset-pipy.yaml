@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: pipy-sidecar-008
+  labels:
+    app: pipy-011-serve-static
+    tier: frontend
+spec:
+  # modify replicas according to your case
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        tier: frontend
+        sys: pipy-sidecar-samples
+      annotations:
+        flomesh.io/inject: "true"
+    spec:
+      containers:
+      - name: pipy-011
+        image: flomesh/pipy:latest
+        ports:
+        - containerPort: 6000
+        command: [ "/usr/local/bin/pipy", "/etc/pipy/test/011-serve-static/pipy.cfg" ]

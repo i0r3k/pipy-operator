@@ -26,7 +26,7 @@ bases:
 # [Proxy Sidecar Injector]
 - ../proxy-injector
 # [Proxy Config Server]
-- ../proxy-cfg-srv
+# - ../proxy-cfg
 
 patchesStrategicMerge:
 # Protect the /metrics endpoint by putting it behind auth.
@@ -60,15 +60,39 @@ vars:
     group: cert-manager.io
     version: v1alpha2
     name: serving-cert # this name should match the one in certificate.yaml
-- name: SERVICE_NAMESPACE # namespace of the service
+- name: PROXY_WEBHOOK_SERVICE_NAMESPACE # namespace of the service
   objref:
     kind: Service
     version: v1
     name: webhook-service
   fieldref:
     fieldpath: metadata.namespace
-- name: SERVICE_NAME
+- name: PROXY_WEBHOOK_SERVICE_NAME
   objref:
     kind: Service
     version: v1
     name: webhook-service
+- name: INJECTOR_SERVICE_NAMESPACE # namespace of the service
+  objref:
+    kind: Service
+    version: v1
+    name: pipy-sidecar-injector-service
+  fieldref:
+    fieldpath: metadata.namespace
+- name: INJECTOR_SERVICE_NAME
+  objref:
+    kind: Service
+    version: v1
+    name: pipy-sidecar-injector-service
+#- name: CFG_SERVICE_NAMESPACE # namespace of the cfg service
+#  objref:
+#    kind: Service
+#    version: v1
+#    name: pipy-cfg-service
+#  fieldref:
+#    fieldpath: metadata.namespace
+#- name: CFG_SERVICE_NAME
+#  objref:
+#    kind: Service
+#    version: v1
+#    name: pipy-cfg-service

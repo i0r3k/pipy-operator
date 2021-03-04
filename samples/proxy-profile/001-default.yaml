@@ -1,0 +1,15 @@
+apiVersion: flomesh.io/v1alpha1
+kind: ProxyProfile
+metadata:
+  name: proxy-profile-001
+spec:
+  selector:
+    matchLabels:
+      app: pipy-011-serve-static
+  namespace: default
+  config:
+    config.tpl: |
+      pipy
+        pipeline 0.0.0.0:{{ .ProxyPort }}
+          proxy-tcp
+            to = 127.0.0.1:{{ .TargetPort }}

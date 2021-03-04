@@ -18,12 +18,12 @@ metadata:
 spec:
   # $(SERVICE_NAME) and $(SERVICE_NAMESPACE) will be substituted by kustomize
   dnsNames:
-  - $(SERVICE_NAME).$(SERVICE_NAMESPACE).svc
-  - $(SERVICE_NAME).$(SERVICE_NAMESPACE).svc.cluster.local
+  - $(PROXY_WEBHOOK_SERVICE_NAME).$(PROXY_WEBHOOK_SERVICE_NAMESPACE).svc
+  - $(PROXY_WEBHOOK_SERVICE_NAME).$(PROXY_WEBHOOK_SERVICE_NAMESPACE).svc.cluster.local
   - $(INJECTOR_SERVICE_NAME).$(INJECTOR_SERVICE_NAMESPACE).svc
   - $(INJECTOR_SERVICE_NAME).$(INJECTOR_SERVICE_NAMESPACE).svc.cluster.local
-  - $(CFG_SERVICE_NAME).$(CFG_SERVICE_NAMESPACE).svc
-  - $(CFG_SERVICE_NAME).$(CFG_SERVICE_NAMESPACE).svc.cluster.local
+#  - $(CFG_SERVICE_NAME).$(CFG_SERVICE_NAMESPACE).svc
+#  - $(CFG_SERVICE_NAME).$(CFG_SERVICE_NAMESPACE).svc.cluster.local
   issuerRef:
     kind: Issuer
     name: selfsigned-issuer

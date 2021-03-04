@@ -1,0 +1,119 @@
+#
+# Test it with below scripts, change the IP if necessary
+# curl http://10.0.2.15:6000/ -H "Host: test-svc.test-ns.abc.com"
+# curl http://10.0.2.15:6000/ -H "Host: test-svc-proxy.test-ns.abc.com"
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pipy-sidecar-100
+  labels:
+    app: pipy-011-serve-static
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pipy-011-serve-static
+  template:
+    metadata:
+      labels:
+        app: pipy-011-serve-static
+      annotations:
+        flomesh.io/inject: "true"
+    spec:
+      containers:
+      - name: pipy-011
+        image: flomesh/pipy:latest
+        ports:
+        - containerPort: 6000
+        command: ["/usr/local/bin/pipy", "/etc/pipy/test/011-serve-static/pipy.cfg"]
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pipy-sidecar-100
+spec:
+  ports:
+  - name: pipy-site
+    port: 6000
+    targetPort: 6000
+  - name: proxy
+    port: 6010
+    targetPort: 6010
+  selector:
+    app: pipy-011-serve-static
+
+---
+apiVersion: flomesh.io/v1alpha1
+kind: Proxy
+metadata:
+  name: pipy-ingress-100
+spec:
+  mode: Ingress
+  tplMode: Raw
+  image: flomesh/pipy:latest
+  port: 6000
+  config:
+    config.cfg: |
+      pipy
+        pipeline :6000
+          decode-http-request
+            prefix = in
+          print
+          # This script controls variables ${pipeline} and ${target}
+          script
+            source = dispatch.js
+          # Forwards to pipeline 'sample-svc' or '404'
+          proxy
+            to = ${pipeline}
+
+        #
+        # When route is found, forwards to ${target}
+        #
+        pipeline sample-svc
+          encode-http-request
+            prefix = in
+          proxy-tcp
+            to = ${target}
+
+        #
+        # When route is not found, responds with 404
+        #
+        pipeline 404
+          hello
+            message = No route\n
+          encode-http-response
+            prefix = in
+            status = Not Found
+            status_code = 404
+
+    dispatch.js: |
+      import ROUTES from './routes.js';
+
+      export default (output, context) => (
+        input => {
+
+          // Find route on every message start
+          if (input instanceof Event &&
+              input.type === 'messagestart'
+          ) {
+            const host = context.get('in.request.host');
+            const target = ROUTES[host];
+            if (target === undefined) {
+              context.set('pipeline', '404');
+            } else {
+              context.set('pipeline', 'sample-svc');
+              context.set('target', target);
+            }
+          }
+
+          // Pass down everything
+          output(input);
+        }
+      );
+    routes.js: |
+      export default {
+        'test-svc.test-ns.abc.com': 'pipy-sidecar-100.default.svc:6000',
+        'test-svc-proxy.test-ns.abc.com': 'pipy-sidecar-100.default.svc:6010',
+      }

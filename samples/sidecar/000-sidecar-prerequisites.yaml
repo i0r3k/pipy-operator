@@ -1,0 +1,15 @@
+apiVersion: flomesh.io/v1alpha1
+kind: ProxyProfile
+metadata:
+  name: proxy-profile-sidecar-000
+spec:
+  selector:
+    matchLabels:
+      sys: pipy-sidecar-samples
+  namespace: default
+  config:
+    config.tpl: |
+      pipy
+        pipeline 0.0.0.0:{{ .ProxyPort }}
+          proxy-tcp
+            to = 127.0.0.1:{{ .TargetPort }}

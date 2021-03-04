@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: proxy-injector
-        image: flomesh/pipy-sidecar-injector:latest
+        image: proxy-injector:latest
         command:
         - /proxy-injector
         ports:
@@ -26,23 +26,18 @@ spec:
           protocol: TCP
         args:
         - --enable-leader-election
-        - -sidecarCfgFile=/etc/webhook/config/pipy-sidecar-cfg.yaml
+        - -sidecarCfgFile=tpl/proxy.tmpl
         resources:
           limits:
             cpu: 100m
-            memory: 30Mi
+            memory: 100Mi
           requests:
             cpu: 100m
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
           readOnly: true
-        - name: injector-config
-          mountPath: /etc/webhook/config
       volumes:
-      - name: injector-config
-        configMap:
-          name: sidecar-injector-configmap
       - name: cert
         secret:
           defaultMode: 420
