@@ -139,6 +139,12 @@ metadata:
   name: proxyprofiles.flomesh.io
 spec:
   additionalPrinterColumns:
+  - JSONPath: .spec.selector
+    name: Selector
+    type: string
+  - JSONPath: .spec.namespace
+    name: Namespace
+    type: string
   - JSONPath: .metadata.creationTimestamp
     name: Age
     type: date
@@ -475,6 +481,97 @@ subjects:
   namespace: flomesh-system
 ---
 apiVersion: v1
+data:
+  proxy.tmpl: |-
+    containers:
+    - name: sidecar
+      image: {{ .ProxyImage }}
+      imagePullPolicy: Always
+      ports:
+      - containerPort: {{ .ProxyPort }}
+      env:
+      - name: PIPY_CONFIG_PATH
+        value: "/sidecar/config"
+      - name: PIPY_CONFIG_NAME
+        value: "config.cfg"
+      - name: PIPY_CONFIG
+        value: "$(PIPY_CONFIG_PATH)/$(PIPY_CONFIG_NAME)"
+      - name: PIPY_PORT
+        value: "{{ .ProxyPort }}"
+      - name: PIPY_TARGET_PORT
+        value: "{{ .TargetPort }}"
+      - name: _pod_ns
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.namespace
+      - name: _pod_nodeName
+        valueFrom:
+          fieldRef:
+            fieldPath: spec.nodeName
+      - name: _pod_name
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
+      - name: _pod_IP
+        valueFrom:
+          fieldRef:
+            fieldPath: status.podIP
+      - name: _pod_hostIP
+        valueFrom:
+          fieldRef:
+            fieldPath: status.hostIP
+      {{ range $name, $value := .ProxyLabels2Envs }}
+      - name: K8S_LABELS.{{ $name }}
+        value: {{ $value }}
+      {{ end }}
+      command: ["/bin/sh"]
+      args:
+      - -c
+      - >-
+          cat ${PIPY_CONFIG} &&
+          echo "starting pipy sidecar with ${PIPY_CONFIG}..." &&
+          /usr/local/bin/pipy ${PIPY_CONFIG} --watch-config-file --reuse-port --log-level=debug
+      volumeMounts:
+      - mountPath: /sidecar
+        name: shared-proxy-res
+    initContainers:
+    - name: proxy-init
+      image: {{ .ProxyInitImage }}
+      imagePullPolicy: Always
+      env:
+      - name: PIPY_CONFIG_PATH
+        value: "/sidecar/config"
+      - name: PIPY_CONFIG_NAME
+        value: "config.cfg"
+      - name: PIPY_TPL_NAME
+        value: "config.tpl"
+      - name: PIPY_CONFIG
+        value: "$(PIPY_CONFIG_PATH)/$(PIPY_CONFIG_NAME)"
+      - name: PIPY_TPL
+        value: "$(PIPY_CONFIG_PATH)/$(PIPY_TPL_NAME)"
+      command: ["/bin/sh"]
+      args:
+      - -c
+      - >-
+          mkdir -p -v ${PIPY_CONFIG_PATH} &&
+          cp -fv /config/* ${PIPY_CONFIG_PATH} &&
+          ls -l ${PIPY_CONFIG_PATH} &&
+          cat ${PIPY_TPL} &&
+          ls -l /proxy-init &&
+          /proxy-init --proxy-port={{ .ProxyPort }} --target-port={{ .TargetPort }} &&
+          cat ${PIPY_CONFIG}
+      volumeMounts:
+      - name: shared-proxy-res
+        mountPath: /sidecar
+    volumes:
+    - emptyDir: {}
+      name: shared-proxy-res
+kind: ConfigMap
+metadata:
+  name: flomesh-proxy-injector-tpl
+  namespace: flomesh-system
+---
+apiVersion: v1
 kind: Service
 metadata:
   labels:
@@ -547,6 +644,7 @@ spec:
         command:
         - /manager
         image: flomesh/pipy-operator:latest
+        imagePullPolicy: Always
         name: manager
         ports:
         - containerPort: 9443
@@ -590,10 +688,13 @@ spec:
       containers:
       - args:
         - --enable-leader-election
-        - -sidecarCfgFile=tpl/proxy.tmpl
+        - --sidecar-cfg-file=/tpl/proxy.tmpl
+        - --proxy-image=flomesh/pipy:latest
+        - --proxy-init-image=flomesh/pipy-sidecar-init:latest
         command:
         - /proxy-injector
         image: flomesh/pipy-sidecar-injector:latest
+        imagePullPolicy: Always
         name: proxy-injector
         ports:
         - containerPort: 7443
@@ -609,12 +710,18 @@ spec:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
           readOnly: true
+        - mountPath: /tpl
+          name: tpl
+          readOnly: true
       terminationGracePeriodSeconds: 10
       volumes:
       - name: cert
         secret:
           defaultMode: 420
           secretName: webhook-server-cert
+      - configMap:
+          name: flomesh-proxy-injector-tpl
+        name: tpl
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
