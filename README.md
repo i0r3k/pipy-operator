@@ -6,11 +6,11 @@ CRD and Operator for running pipy in k8s.
 Run pipy on a fresh kubernetes:
 
 ~~~
-kubectl apply -f etc/cert-manager-v1.1.0.yaml
+kubectl apply -f etc/cert-manager-v1.3.1.yaml
 kubectl apply -f artifact/pipy-operator.yaml
-kubectl apply -f config/samples/standalone/001-echo.yaml
-kubectl apply -f config/samples/ingress/008-routing.yaml
-kubectl apply -f config/samples/sidecar/007-deployment-pipy.yaml
+kubectl apply -f samples/standalone/001-echo.yaml
+kubectl apply -f samples/ingress/008-routing.yaml
+kubectl apply -f samples/sidecar/007-deployment-pipy.yaml
 ~~~
 
 ## Sample output
@@ -21,7 +21,7 @@ Output while running on k3s, for reference only:
 k3s version v1.20.0+k3s2 (2ea6b163)
 go version go1.15.5
 
-[root@crd pipy-operator]#  kubectl apply -f etc/cert-manager-v1.1.0.yaml
+[root@crd pipy-operator]#  kubectl apply -f etc/cert-manager-v1.3.1.yaml
 
 [root@crd ~]# kubectl get pods -A
 NAMESPACE      NAME                                      READY   STATUS      RESTARTS   AGE
