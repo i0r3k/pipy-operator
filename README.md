@@ -79,43 +79,42 @@ cert-manager   cert-manager-6865f45f85-7gjcb             1/1     Running     0  
 cert-manager   cert-manager-cainjector-fdbc9f44-8xv27    1/1     Running     0          9h
 cert-manager   cert-manager-webhook-5d59497545-vdchs     1/1     Running     0          9h
 
-[root@crd pipy-operator]#  kubectl apply -f artifact/pipy-operator.yaml
-
 [root@crd pipy-operator]# kubectl apply -f artifact/pipy-operator.yaml
-Warning: apiextensions.k8s.io/v1beta1 CustomResourceDefinition is deprecated in v1.16+, unavailable in v1.22+; use apiextensions.k8s.io/v1 CustomResourceDefinition
-customresourcedefinition.apiextensions.k8s.io/proxies.flomesh.io created
 namespace/flomesh-system created
-customresourcedefinition.apiextensions.k8s.io/proxies.flomesh.io configured
+customresourcedefinition.apiextensions.k8s.io/proxies.flomesh.io created
+customresourcedefinition.apiextensions.k8s.io/proxyprofiles.flomesh.io created
+serviceaccount/flomesh-controller-manager created
 role.rbac.authorization.k8s.io/flomesh-leader-election-role created
 clusterrole.rbac.authorization.k8s.io/flomesh-manager-role created
-clusterrole.rbac.authorization.k8s.io/flomesh-proxy-role created
-Warning: rbac.authorization.k8s.io/v1beta1 ClusterRole is deprecated in v1.17+, unavailable in v1.22+; use rbac.authorization.k8s.io/v1 ClusterRole
 clusterrole.rbac.authorization.k8s.io/flomesh-metrics-reader created
+clusterrole.rbac.authorization.k8s.io/flomesh-proxy-role created
 rolebinding.rbac.authorization.k8s.io/flomesh-leader-election-rolebinding created
 clusterrolebinding.rbac.authorization.k8s.io/flomesh-manager-rolebinding created
 clusterrolebinding.rbac.authorization.k8s.io/flomesh-proxy-rolebinding created
+configmap/flomesh-manager-config created
+configmap/flomesh-proxy-injector-tpl created
 service/flomesh-controller-manager-metrics-service created
+service/flomesh-pipy-sidecar-injector-service created
 service/flomesh-webhook-service created
 deployment.apps/flomesh-controller-manager created
+deployment.apps/flomesh-pipy-sidecar-injector created
 certificate.cert-manager.io/flomesh-serving-cert created
 issuer.cert-manager.io/flomesh-selfsigned-issuer created
-Warning: admissionregistration.k8s.io/v1beta1 MutatingWebhookConfiguration is deprecated in v1.16+, unavailable in v1.22+; use admissionregistration.k8s.io/v1 MutatingWebhookConfiguration
 mutatingwebhookconfiguration.admissionregistration.k8s.io/flomesh-mutating-webhook-configuration created
-Warning: admissionregistration.k8s.io/v1beta1 ValidatingWebhookConfiguration is deprecated in v1.16+, unavailable in v1.22+; use admissionregistration.k8s.io/v1 ValidatingWebhookConfiguration
+mutatingwebhookconfiguration.admissionregistration.k8s.io/flomesh-sidecar-injector-webhook-configuration created
 validatingwebhookconfiguration.admissionregistration.k8s.io/flomesh-validating-webhook-configuration created
 
 [root@crd pipy-operator]# kubectl get pods -A
-NAMESPACE        NAME                                          READY   STATUS      RESTARTS   AGE
-kube-system      helm-install-traefik-s77bg                    0/1     Completed   5          9h
-kube-system      metrics-server-86cbb8457f-d6hk2               1/1     Running     6          9h
-kube-system      local-path-provisioner-7c458769fb-9ksqq       1/1     Running     7          9h
-kube-system      svclb-traefik-8pb9c                           2/2     Running     4          9h
-kube-system      coredns-854c77959c-gk9p8                      1/1     Running     2          9h
-kube-system      traefik-6f9cbd9bd4-842d7                      1/1     Running     2          9h
-cert-manager     cert-manager-6865f45f85-7gjcb                 1/1     Running     0          9h
-cert-manager     cert-manager-cainjector-fdbc9f44-8xv27        1/1     Running     0          9h
-cert-manager     cert-manager-webhook-5d59497545-vdchs         1/1     Running     0          9h
-flomesh-system   flomesh-controller-manager-55fb9565bb-c46fc   2/2     Running     0          79s
+NAMESPACE        NAME                                             READY   STATUS    RESTARTS   AGE
+kube-system      metrics-server-7b4f8b595-mp2ln                   1/1     Running   0          2m31s
+kube-system      local-path-provisioner-7ff9579c6-2pbcc           1/1     Running   0          2m31s
+kube-system      coredns-66c464876b-2m788                         1/1     Running   0          2m31s
+cert-manager     cert-manager-cainjector-59f76f7fff-v526z         1/1     Running   0          89s
+cert-manager     cert-manager-59f6c76f4b-fkwhx                    1/1     Running   0          89s
+cert-manager     cert-manager-webhook-565d54dd68-rdz92            1/1     Running   0          89s
+flomesh-system   flomesh-pipy-sidecar-injector-6c75f7c464-dnn9b   1/1     Running   0          41s
+flomesh-system   flomesh-controller-manager-c75bc95d5-9v86m       1/1     Running   0          41s
+
 
 [root@crd pipy-operator]#  kubectl apply -f config/samples/standalone/001-echo.yaml
 
