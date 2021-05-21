@@ -1,0 +1,66 @@
+apiVersion: flomesh.io/v1alpha1
+kind: Proxy
+metadata:
+  name: pipy-standalone-007
+spec:
+  mode: Standalone
+  tplMode: Raw
+  replicas: 1
+  image: flomesh/pipy-pjs:latest
+  port: 6000
+  config:
+    config.js: |
+      pipy({
+          _startTime: 0,
+          _responseTime: 0,
+          _request: null,
+      })
+
+      .listen(6000)
+          .fork('in')
+          .connect('127.0.0.1:8080')
+          .fork('out')
+
+      // Extract request info
+      .pipeline('in')
+          .decodeHttpRequest()
+          .onMessageStart(() => _startTime = Date.now())
+          .onMessage(msg => _request = msg)
+
+      // Extract response info
+      .pipeline('out')
+          .decodeHttpResponse()
+          .onMessageStart(() => _responseTime = Date.now())
+          .replaceMessage(msg => new Message(
+              JSON.encode({
+                  time: _startTime,
+                  latency: _responseTime - _startTime,
+                  ..._request.head,
+                  body: _request.body.toString(),
+                  response: {
+                      ...msg.head,
+                      body: msg.body.toString(),
+                  },
+              })
+          ))
+          .mux('log', 0)
+
+      // Post log
+      .pipeline('log')
+          .encodeHttpRequest({
+              method: 'POST',
+              path: '/api/v1/log',
+          })
+          .connect('127.0.0.1:8123')
+
+      // Mock logging service on port 8123
+      .listen(8123)
+          .decodeHttpRequest()
+          .replaceMessage(new Message('OK'))
+          .encodeHttpResponse()
+
+      // Mock service on port 8080
+      .listen(8080)
+          .decodeHttpRequest()
+          .replaceMessage(new Message('Hello!\n'))
+          .encodeHttpResponse()

@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pipy-sidecar-injector
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+      - name: proxy-injector
+        args:
+        - --enable-leader-election
+        - --sidecar-cfg-file=/tpl/proxy.tmpl
+        - --proxy-image=flomesh/pipy-pjs:latest
+        - --proxy-init-image=flomesh/proxy-init:dev

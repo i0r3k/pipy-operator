@@ -1,13 +1,15 @@
 
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   creationTimestamp: null
   name: sidecar-injector-webhook-configuration
 webhooks:
-- clientConfig:
-    caBundle: Cg==
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
     service:
       name: pipy-sidecar-injector-service
       namespace: system
@@ -24,6 +26,8 @@ webhooks:
     - UPDATE
     resources:
     - pods
+  sideEffects: None
+
 #    - daemonsets
 #    - replicationcontrollers
 #    - deployments

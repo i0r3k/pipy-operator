@@ -24,11 +24,26 @@ spec:
     spec:
       containers:
       - command:
-        - /manager
+        - /operator-manager
         args:
-        - --enable-leader-election
-        image: controller:latest
+        - --leader-elect
+        image: operator-manager:latest
+        imagePullPolicy: Always
         name: manager
+        securityContext:
+          allowPrivilegeEscalation: false
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
         resources:
           limits:
             cpu: 100m
@@ -36,4 +51,11 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
+        volumeMounts:
+        - name: shared-mgr-res
+          mountPath: /mgr
+      volumes:
+      - emptyDir: {}
+        name: shared-mgr-res
+      serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10

@@ -18,6 +18,7 @@ spec:
       containers:
       - name: proxy-injector
         image: proxy-injector:latest
+        imagePullPolicy: Always
         command:
         - /proxy-injector
         ports:
@@ -26,7 +27,9 @@ spec:
           protocol: TCP
         args:
         - --enable-leader-election
-        - -sidecarCfgFile=tpl/proxy.tmpl
+        - --sidecar-cfg-file=/tpl/proxy.tmpl
+        - --proxy-image=flomesh/pipy-pjs:latest
+        - --proxy-init-image=flomesh/proxy-init:latest
         resources:
           limits:
             cpu: 100m
@@ -37,9 +40,16 @@ spec:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
           readOnly: true
+        - mountPath: /tpl
+          name: tpl
+          readOnly: true
       volumes:
       - name: cert
         secret:
           defaultMode: 420
           secretName: webhook-server-cert
+      - name: tpl
+        configMap:
+          name: proxy-injector-tpl
+      serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10

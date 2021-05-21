@@ -8,5 +8,5 @@ spec:
   tplMode: "BuiltIn"
   tpl: "minimized"
   replicas: 1
-  image: "flomesh/pipy:latest"
+  image: "flomesh/pipy-pjs:latest"
   port: 6000

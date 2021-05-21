@@ -6,9 +6,17 @@ resources:
 configurations:
 - kustomizeconfig.yaml
 
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-images:
-- name: proxy-injector
-  newName: flomesh/pipy-sidecar-injector
-  newTag: latest
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+- files:
+  - tpl/proxy.tmpl
+  name: proxy-injector-tpl
+
+#apiVersion: kustomize.config.k8s.io/v1beta1
+#kind: Kustomization
+#images:
+#- name: proxy-injector
+#  newName: flomesh/pipy-sidecar-injector
+#  newTag: latest

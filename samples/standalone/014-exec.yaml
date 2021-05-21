@@ -1,0 +1,40 @@
+apiVersion: flomesh.io/v1alpha1
+kind: Proxy
+metadata:
+  name: pipy-standalone-014
+spec:
+  mode: Standalone
+  tplMode: Raw
+  replicas: 1
+  image: flomesh/pipy-pjs:latest
+  port: 8080
+  config:
+    config.js: |
+      pipy({
+          _g: {
+              session: null,
+          },
+      })
+
+      .listen(6000)
+          .onSessionStart(() => (
+              _g.session || (
+                  _g.session = new Session('start'),
+                  _g.session.input(new Data)
+              )
+          ))
+          .connect('127.0.0.1:8080', { retryCount: -1, retryDelay: '1s' })
+
+      .pipeline('start')
+          .exec('../../bin/pipy mock.js')
+          .print()
+          .onSessionEnd(() => (
+              _g.session = null,
+              console.log('Child process exited')
+          ))
+    mock.js: |
+      pipy()
+        .listen(8080)
+          .decodeHttpRequest()
+          .replaceMessage(() => new Message('Hello!\n'))
+          .encodeHttpResponse()

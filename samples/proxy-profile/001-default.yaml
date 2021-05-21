@@ -5,11 +5,10 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: pipy-011-serve-static
+      app: pipy-003-hello-ip
   namespace: default
   config:
     config.tpl: |
-      pipy
-        pipeline 0.0.0.0:{{ .ProxyPort }}
-          proxy-tcp
-            to = 127.0.0.1:{{ .TargetPort }}
+      pipy()
+        .listen({{ .ProxyPort }})
+        .connect(() => "127.0.0.1:{{ .TargetPort }}")

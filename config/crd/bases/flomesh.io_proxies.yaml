@@ -1,30 +1,13 @@
 
 ---
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.9
+    controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
   name: proxies.flomesh.io
 spec:
-  additionalPrinterColumns:
-  - JSONPath: .spec.mode
-    name: Mode
-    type: string
-  - JSONPath: .spec.tplMode
-    name: TplMode
-    priority: 1
-    type: string
-  - JSONPath: .spec.port
-    name: Port
-    type: integer
-  - JSONPath: .spec.image
-    name: Image
-    type: string
-  - JSONPath: .metadata.creationTimestamp
-    name: Age
-    type: date
   group: flomesh.io
   names:
     kind: Proxy
@@ -34,110 +17,126 @@ spec:
     - px
     singular: proxy
   scope: Namespaced
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      description: Proxy is the Schema for the proxies API
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          description: ProxySpec defines the desired state of Proxy
-          properties:
-            config:
-              additionalProperties:
-                type: string
-              description: Config contains the piped configuration data in case the
-                TemplateMode is Raw. Each key must consist of alphanumeric characters,
-                '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the
-                BinaryData field.
-              type: object
-            configMountDir:
-              description: ConfigMountDir is the path where the configmap will be
-                mounted Defaults to /etc/pipy/operator
-              type: string
-            configMountFileName:
-              description: ConfigMountFileName is the name of pipy configuration file
-                Defaults to config.cfg
-              type: string
-            image:
-              description: Image is the container image to run.  Image must have a
-                tag. Defaults to flomesh/pipy:latest
-              type: string
-            mode:
-              description: 'FlomeshMode specifies the mode of creating FLomesh topology.
-                Valid values are: - "Standalone" (default): a standalone Flomesh;
-                - "Inbound": works as sidecar and injected into each selected pod,
-                proxy the inbound traffic; - "Outbound": works as sidecar and injected
-                into each selected pod, proxy the outbound traffic; - "Sidecar": works
-                as sidecar and injected into each selected pod, proxy both inbound
-                and outbound traffic; - "Ingress": works as DaemonSet ans expose HostPort,
-                proxy both inbound and outbound traffic;'
-              enum:
-              - Standalone
-              - Inbound
-              - Outbound
-              - Ingress
-              - Sidecar
-              type: string
-            port:
-              description: Number of Port to expose on the host. In Ingress Mode,
-                it's the hostPort. If specified, this must be a valid port number,
-                0 < x < 65536. Defaults to 8080
-              format: int32
-              maximum: 65535
-              minimum: 1
-              type: integer
-            replicas:
-              description: Replicas is the number of replicas to maintain, it's useless
-                in Ingress Mode Defaults to 1
-              format: int32
-              minimum: 1
-              type: integer
-            tpl:
-              description: Tpl is the built-in template name, will be translated to
-                a valid file path and name transparently
-              type: string
-            tplMode:
-              description: 'TemplateMode specifies the mode of handling piped configuration
-                Valid values are: - "BuiltIn" (default): piped has some pre-configured
-                configuration template to ease the usage, this mode will enable the
-                operator to load the configuration from the image; - "Raw": in some
-                cases the pre-configured configuration is not suitable for the requirements,
-                the raw mode let user provides a complete configuration instead of
-                using the built-in;'
-              enum:
-              - BuiltIn
-              - Raw
-              type: string
-          type: object
-        status:
-          description: ProxyStatus defines the observed state of Proxy
-          properties:
-            healthyReplicas:
-              description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                of cluster Important: Run "make" to regenerate code after modifying
-                this file'
-              format: int32
-              type: integer
-          type: object
-      type: object
-  version: v1alpha1
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.mode
+      name: Mode
+      type: string
+    - jsonPath: .spec.tplMode
+      name: TplMode
+      priority: 1
+      type: string
+    - jsonPath: .spec.port
+      name: Port
+      type: integer
+    - jsonPath: .spec.image
+      name: Image
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Proxy is the Schema for the proxies API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ProxySpec defines the desired state of Proxy
+            properties:
+              config:
+                additionalProperties:
+                  type: string
+                description: Config contains the piped configuration data in case
+                  the TemplateMode is Raw. Each key must consist of alphanumeric characters,
+                  '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the
+                  BinaryData field.
+                type: object
+              configMountDir:
+                description: ConfigMountDir is the path where the configmap will be
+                  mounted Defaults to /etc/pipy/operator
+                type: string
+              configMountFileName:
+                description: ConfigMountFileName is the name of pipy configuration
+                  file Defaults to config.js
+                type: string
+              image:
+                description: Image is the container image to run.  Image must have
+                  a tag. Defaults to flomesh/pipy-pjs:latest
+                type: string
+              mode:
+                description: 'FlomeshMode specifies the mode of creating FLomesh topology.
+                  Valid values are: - "Standalone" (default): a standalone Flomesh;
+                  - "Inbound": works as sidecar and injected into each selected pod,
+                  proxy the inbound traffic; - "Outbound": works as sidecar and injected
+                  into each selected pod, proxy the outbound traffic; - "Sidecar":
+                  works as sidecar and injected into each selected pod, proxy both
+                  inbound and outbound traffic; - "Ingress": works as DaemonSet ans
+                  expose HostPort, proxy both inbound and outbound traffic;'
+                enum:
+                - Standalone
+                - Inbound
+                - Outbound
+                - Ingress
+                - Sidecar
+                type: string
+              port:
+                description: Number of Port to expose on the host. In Ingress Mode,
+                  it's the hostPort. If specified, this must be a valid port number,
+                  0 < x < 65536. Defaults to 8080
+                format: int32
+                maximum: 65535
+                minimum: 1
+                type: integer
+              replicas:
+                description: Replicas is the number of replicas to maintain, it's
+                  useless in Ingress Mode Defaults to 1
+                format: int32
+                minimum: 1
+                type: integer
+              tpl:
+                description: Tpl is the built-in template name, will be translated
+                  to a valid file path and name transparently
+                type: string
+              tplMode:
+                description: 'TemplateMode specifies the mode of handling piped configuration
+                  Valid values are: - "BuiltIn" (default): piped has some pre-configured
+                  configuration template to ease the usage, this mode will enable
+                  the operator to load the configuration from the image; - "Raw":
+                  in some cases the pre-configured configuration is not suitable for
+                  the requirements, the raw mode let user provides a complete configuration
+                  instead of using the built-in;'
+                enum:
+                - BuiltIn
+                - Raw
+                type: string
+            type: object
+          status:
+            description: ProxyStatus defines the observed state of Proxy
+            properties:
+              healthyReplicas:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file'
+                format: int32
+                type: integer
+            type: object
+        type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""

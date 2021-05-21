@@ -1,0 +1,152 @@
+apiVersion: flomesh.io/v1alpha1
+kind: Proxy
+metadata:
+  name: pipy-standalone-005
+spec:
+  mode: Standalone
+  tplMode: Raw
+  replicas: 1
+  image: flomesh/pipy-pjs:latest
+  port: 6000
+  config:
+    config.js: |
+      // Load-balance settings are loaded from `config.json` at startup. The JSON
+      // configuration file is expected to include the following information:
+      // {
+      //    "mode": <algorithm>,
+      //    "sticky": <sticky session on/off>,
+      //    "targets": {
+      //      <ip:port>: <weight>,
+      //      <ip:port>: <weight>,
+      //      ...
+      //    }
+      // }
+      //
+      // Where <algorithm> can be "ch" (for consistent hashing) or "rr" (for weighted
+      // round-robin) or "lc" (for least connections).
+      //
+      // Set "sticky" to true to enable sticky session mode, where requests with the
+      // same remote address and cookie values are forwarded to the same target.
+
+      ((
+          conf,
+          targets,
+          weights,
+          buckets,
+          total,
+          count,
+          algorithms
+      ) => (
+
+      conf = JSON.decode(os.readFile('config.json')),
+      targets = Object.entries(conf.targets),
+      weights = targets.map(t => t[1]),
+      buckets = targets.map(() => 0),
+      total = weights.reduce((a, b) => a + b),
+      count = 0,
+      algorithms = {
+          // consistent hashing
+          'ch': session => (
+              ((hash) => (
+                  hash = session.remoteAddress.split('.').reduce((h, x) => (h|0) + (x|0)),
+                  _target = _targets[hash % _targets.length]
+              ))()
+          ),
+          // round-robin
+          'rr': () => (
+              ((min, cur, idx) => (
+                  _targets.forEach((t, i) => (
+                      (cur = buckets[i] / weights[i]),
+                      (cur < min || !_target) && (
+                          _target = t,
+                          min = cur,
+                          idx = i
+                      )
+                  )),
+                  buckets[idx]++,
+                  (++count >= total) && (buckets.fill(0), count = 0)
+              ))()
+          ),
+          // least connections
+          'lc': () => (
+              ((min, cur) => (
+                  _targets.forEach(t => (
+                      (cur = _connections[t] | 0),
+                      (cur < min || !_target) && (
+                          _target = t,
+                          min = cur
+                      )
+                  ))
+              ))()
+          ),
+      },
+
+      pipy({
+          _targets: targets.map(t => t[0]),
+          _target: '',
+          _connections: {},
+          _select: algorithms[conf.mode],
+          _cache: conf.sticky ? {} : null,
+      })
+
+      .listen(6000)
+          .onSessionEnd(() => _connections[_target]--)
+          .fork('select')
+          .link('proxy', () => _target !== '')
+
+      // Select target
+      .pipeline('select')
+          .decodeHttpRequest()
+          .onMessageStart(e => (key => (
+              _cache ? (
+                  key = `${this.remoteAddress},${e.head.headers.cookie}`,
+                  _target = _cache[key],
+                  _target || _select(this),
+                  _cache[key] = _target
+              ) : (
+                  _select(this)
+              ),
+              _connections[_target]++
+          ))())
+
+      // To upstream
+      .pipeline('proxy')
+          .connect(() => _target)
+
+      // List number of connections
+      .listen(6081)
+          .decodeHttpRequest()
+          .replaceMessage(() => new Message(
+              _targets.map(t => `${t} x ${_connections[t]|0}`).join('\n')
+          ))
+          .encodeHttpResponse()
+
+      // Mock service on port 8080
+      .listen(8080)
+          .decodeHttpRequest()
+          .replaceMessage(new Message('Hello from service 8080'))
+          .encodeHttpResponse()
+
+      // Mock service on port 8081
+      .listen(8081)
+          .decodeHttpRequest()
+          .replaceMessage(new Message('Hello from service 8081'))
+          .encodeHttpResponse({ status: 300 })
+
+      // Mock service on port 8082
+      .listen(8082)
+          .decodeHttpRequest()
+          .replaceMessage(new Message('Hello from service 8082'))
+          .encodeHttpResponse({ status: 500 })
+
+      ))()
+    config.json: |
+      {
+        "mode": "rr",
+        "sticky": true,
+        "targets": {
+          "127.0.0.1:8080": 100,
+          "127.0.0.1:8081": 50,
+          "127.0.0.1:8082": 50
+        }
+      }

@@ -6,15 +6,13 @@ spec:
   mode: Standalone
   tplMode: Raw
   replicas: 1
-  image: flomesh/pipy:latest
+  image: flomesh/pipy-pjs:latest
   port: 6000
   config:
-    config.cfg: |
-      pipy
-        pipeline 0.0.0.0:6000
-          decode-http-request
-            prefix = ctx
-          encode-http-response
-            prefix = ctx
+    config.js: |
+      pipy()
+        .listen(6000)
+          .decodeHttpRequest()
+          .encodeHttpResponse()
 
 

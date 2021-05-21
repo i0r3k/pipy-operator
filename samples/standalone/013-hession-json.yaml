@@ -1,0 +1,31 @@
+apiVersion: flomesh.io/v1alpha1
+kind: Proxy
+metadata:
+  name: pipy-standalone-013
+spec:
+  mode: Standalone
+  tplMode: Raw
+  replicas: 1
+  image: flomesh/pipy-pjs:latest
+  port: 6000
+  config:
+    config.js: |
+      pipy()
+
+      .listen(6000)
+          .decodeHttpRequest()
+          .replaceMessageBody(body => (
+              Hessian.encode(JSON.decode(body))
+          ))
+          .encodeDubbo()
+          .connect('127.0.0.1:20880')
+          .decodeDubbo()
+          .replaceMessageBody(body => (
+              JSON.encode(Hessian.decode(body), null, 2)
+          ))
+          .encodeHttpResponse()
+
+      // Mock TCP echo server
+      .listen(20880)
+    sample.json: |
+      [null,false,true,123,3.14159265,"Hello!",{"a":1,"b":2,"c":3,"d":{"e":100,"f":200}},{}]

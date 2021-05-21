@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: pipy-011
-        image: flomesh/pipy:latest
+        image: flomesh/pipy-pjs:latest
         ports:
-        - containerPort: 6000
-        command: [ "/usr/local/bin/pipy", "/etc/pipy/test/011-serve-static/pipy.cfg" ]
+        - containerPort: 6080
+        command: [ "/usr/local/bin/pipy", "/etc/pipy/test/003-hello-ip/pipy.js", "--reuse-port" ]

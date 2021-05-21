@@ -1,0 +1,50 @@
+apiVersion: flomesh.io/v1alpha1
+kind: Proxy
+metadata:
+  name: pipy-standalone-004
+spec:
+  mode: Standalone
+  tplMode: Raw
+  replicas: 1
+  image: flomesh/pipy-pjs:latest
+  port: 6000
+  config:
+    config.js: |
+      pipy({
+          _routes: JSON.decode(os.readFile('./routes.json')),
+          _target: '',
+      })
+
+      .listen(6000)
+          .fork('routing')
+          .wait(() => _target !== '')
+          .link('404', () => _target === '404', 'pass')
+
+      .pipeline('routing')
+          .decodeHttpRequest()
+          .onMessageStart(e => _target = _routes[e.head.path] || '404')
+
+      .pipeline('404')
+          .decodeHttpRequest()
+          .replaceMessage(new Message({ status: 404 }, 'Not found\n'))
+          .encodeHttpResponse()
+
+      .pipeline('pass')
+          .connect(() => _target)
+
+      // Mock service on port 8080
+      .listen(8080)
+          .decodeHttpRequest()
+          .replaceMessage(new Message('Hello from service 8080\n'))
+          .encodeHttpResponse()
+
+      // Mock service on port 8081
+      .listen(8081)
+          .decodeHttpRequest()
+          .replaceMessage(new Message('Hello from service 8081\n'))
+          .encodeHttpResponse()
+    routes.json: |
+      {
+        "/hello": "127.0.0.1:8080",
+        "/hi"   : "127.0.0.1:8081"
+      }

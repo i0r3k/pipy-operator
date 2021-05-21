@@ -1,0 +1,79 @@
+apiVersion: flomesh.io/v1alpha1
+kind: Proxy
+metadata:
+  name: pipy-standalone-011
+spec:
+  mode: Standalone
+  tplMode: Raw
+  replicas: 1
+  image: flomesh/pipy-pjs:latest
+  port: 6000
+  config:
+    config.js: |
+      pipy({
+          _state: 'head',
+          _head: null,
+          _body: null,
+          _size: 0,
+      })
+
+      .listen(6000)
+          .decodeHttpRequest()
+          .replaceMessage(evt => (
+              ((
+                  head
+              ) => (
+                  head = evt.body.size.toString(),
+                  [
+                      new Data('000000'.substring(0, 6 - head.length) + head),
+                      evt.body,
+                  ]
+              ))()
+          ))
+          .connect('127.0.0.1:8080')
+          .onSessionStart(() => _head = new Data)
+          .replaceData(inp => (
+              ((
+                  output
+              ) => (
+                  output = [],
+                  repeat(i => (
+                      _state === 'head' && (
+                          _head.push(
+                              inp.shift(6 - _head.size)
+                          ),
+                          _head.size === 6 && (
+                              _size = _head.toString()|0,
+                              _size ? (
+                                  _body = new Data,
+                                  _state = 'body'
+                              ) : (
+                                  output.push(new MessageStart),
+                                  output.push(new MessageEnd),
+                                  _head = new Data
+                              )
+                          )
+                      ) ||
+                      _state === 'body' && (
+                          _body.push(
+                              inp.shift(_size - _body.size)
+                          ),
+                          _body.size === _size && (
+                              output.push(new MessageStart),
+                              output.push(_body),
+                              output.push(new MessageEnd),
+                              _head = new Data,
+                              _state = 'head'
+                          )
+                      ),
+                      inp.size > 0
+                  )),
+                  output
+              ))()
+          ))
+          .encodeHttpResponse()
+
+      // Mock TCP echo server
+      .listen(8080)
+    input.txt: |
+      000005Hello000006World!
