@@ -205,6 +205,18 @@ spec:
             type: object
           status:
             description: ProxyProfileStatus defines the observed state of ProxyProfile
+            properties:
+              matchedPods:
+                description: matchedPods is the number of Pods whose labels are matched with this ProxyProfile's selector and are created after sidecarset creates
+                format: int32
+                type: integer
+              readyPods:
+                description: readyPods is the number of matched Pods that have a ready condition
+                format: int32
+                type: integer
+            required:
+            - matchedPods
+            - readyPods
             type: object
         type: object
     served: true
