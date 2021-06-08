@@ -205,6 +205,18 @@ spec:
             type: object
           status:
             description: ProxyProfileStatus defines the observed state of ProxyProfile
+            properties:
+              matchedPods:
+                description: matchedPods is the number of Pods whose labels are matched with this ProxyProfile's selector and are created after sidecarset creates
+                format: int32
+                type: integer
+              readyPods:
+                description: readyPods is the number of matched Pods that have a ready condition
+                format: int32
+                type: integer
+            required:
+            - matchedPods
+            - readyPods
             type: object
         type: object
     served: true
@@ -632,7 +644,7 @@ spec:
         - --leader-elect
         command:
         - /operator-manager
-        image: flomesh/operator-manager:0.2.0
+        image: flomesh/operator-manager:0.2.3
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -698,10 +710,10 @@ spec:
         - --enable-leader-election
         - --sidecar-cfg-file=/tpl/proxy.tmpl
         - --proxy-image=flomesh/pipy-pjs:latest
-        - --proxy-init-image=flomesh/proxy-init:0.2.0
+        - --proxy-init-image=flomesh/proxy-init:0.2.3
         command:
         - /proxy-injector
-        image: flomesh/proxy-injector:0.2.0
+        image: flomesh/proxy-injector:0.2.3
         imagePullPolicy: IfNotPresent
         name: proxy-injector
         ports:
