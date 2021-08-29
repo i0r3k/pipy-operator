@@ -1,0 +1,12 @@
+apiVersion: flomesh.io/v1alpha1
+kind: Proxy
+metadata:
+  name: pipy-standalone-103
+spec:
+  mode: Standalone
+  replicas: 1
+  image: flomesh/pipy-pjs:latest
+  port: 6000
+  startupScriptName: "hello-ip.js"
+  configUrl: "http://10.0.0.21:5000"
+

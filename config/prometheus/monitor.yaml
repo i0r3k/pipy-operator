@@ -4,8 +4,8 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   labels:
-    control-plane: controller-manager
-  name: controller-manager-metrics-monitor
+    app.flomesh.io/control-plane: operator-manager
+  name: operator-manager-metrics-monitor
   namespace: system
 spec:
   endpoints:
@@ -13,4 +13,6 @@ spec:
       port: https
   selector:
     matchLabels:
-      control-plane: controller-manager
+      app.flomesh.io/control-plane: operator-manager
+      app.flomesh.io/name: pipy-operator
+      app.flomesh.io/instance: operator-manager

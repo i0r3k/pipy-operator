@@ -4,7 +4,6 @@ metadata:
   name: pipy-standalone-011
 spec:
   mode: Standalone
-  tplMode: Raw
   replicas: 1
   image: flomesh/pipy-pjs:latest
   port: 6000

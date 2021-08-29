@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pipy-sidecar-injector
+  name: proxy-injector
   namespace: system
 spec:
   template:
     spec:
       containers:
-      - name: proxy-injector
+      - name: webhook
         imagePullPolicy: IfNotPresent

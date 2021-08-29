@@ -15,7 +15,7 @@ webhooks:
       namespace: system
       path: /mutate-flomesh-io-v1alpha1-proxy
   failurePolicy: Fail
-  name: mproxy.kb.io
+  name: mproxy.flomesh.kb.io
   rules:
   - apiGroups:
     - flomesh.io
@@ -36,7 +36,7 @@ webhooks:
       namespace: system
       path: /mutate-flomesh-io-v1alpha1-proxyprofile
   failurePolicy: Fail
-  name: mproxyprofile.kb.io
+  name: mproxyprofile.flomesh.kb.io
   rules:
   - apiGroups:
     - flomesh.io
@@ -65,7 +65,7 @@ webhooks:
       namespace: system
       path: /validate-flomesh-io-v1alpha1-proxy
   failurePolicy: Fail
-  name: vproxy.kb.io
+  name: vproxy.flomesh.kb.io
   rules:
   - apiGroups:
     - flomesh.io
@@ -86,7 +86,7 @@ webhooks:
       namespace: system
       path: /validate-flomesh-io-v1alpha1-proxyprofile
   failurePolicy: Fail
-  name: vproxyprofile.kb.io
+  name: vproxyprofile.flomesh.kb.io
   rules:
   - apiGroups:
     - flomesh.io

@@ -10,7 +10,7 @@ metadata:
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: sidecar-injector-webhook-configuration
+  name: proxy-injector-webhook-cfg
   annotations:
     cert-manager.io/inject-ca-from: $(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)
 ---

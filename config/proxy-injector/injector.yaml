@@ -1,22 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pipy-sidecar-injector
+  name: proxy-injector
   namespace: system
   labels:
-    proxy-injector: pipy-sidecar-injector
+    app.flomesh.io/name: pipy-operator
+    app.flomesh.io/instance: proxy-injector
 spec:
   selector:
     matchLabels:
-      proxy-injector: pipy-sidecar-injector
+      app.flomesh.io/name: pipy-operator
+      app.flomesh.io/instance: proxy-injector
   replicas: 1
   template:
     metadata:
       labels:
-        proxy-injector: pipy-sidecar-injector
+        app.flomesh.io/name: pipy-operator
+        app.flomesh.io/instance: proxy-injector
     spec:
       containers:
-      - name: proxy-injector
+      - name: webhook
         image: proxy-injector:latest
         imagePullPolicy: Always
         command:
@@ -27,29 +30,42 @@ spec:
           protocol: TCP
         args:
         - --enable-leader-election
-        - --sidecar-cfg-file=/tpl/proxy.tmpl
         - --proxy-image=flomesh/pipy-pjs:latest
         - --proxy-init-image=flomesh/proxy-init:latest
+        - --v=2
         resources:
           limits:
-            cpu: 100m
-            memory: 100Mi
+            cpu: 500m
+            memory: 300Mi
           requests:
             cpu: 100m
+            memory: 50Mi
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
           readOnly: true
-        - mountPath: /tpl
-          name: tpl
-          readOnly: true
+#        - mountPath: /tpl
+#          name: tpl
+#          readOnly: true
       volumes:
       - name: cert
         secret:
           defaultMode: 420
           secretName: webhook-server-cert
-      - name: tpl
-        configMap:
-          name: proxy-injector-tpl
-      serviceAccountName: controller-manager
+#      - name: tpl
+#        configMap:
+#          name: proxy-injector-tpl
+      serviceAccountName: operator-manager
       terminationGracePeriodSeconds: 10

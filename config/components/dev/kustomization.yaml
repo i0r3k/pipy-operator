@@ -3,3 +3,4 @@ kind: Component
 
 patchesStrategicMerge:
 - injector_args_patch.yaml
+- manager_args_patch.yaml

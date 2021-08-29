@@ -9,10 +9,10 @@ configurations:
 generatorOptions:
   disableNameSuffixHash: true
 
-configMapGenerator:
-- files:
-  - tpl/proxy.tmpl
-  name: proxy-injector-tpl
+#configMapGenerator:
+#- files:
+#  - tpl/proxy.tmpl
+#  name: proxy-injector-tpl
 
 #apiVersion: kustomize.config.k8s.io/v1beta1
 #kind: Kustomization

@@ -1,16 +1,19 @@
 # Adds namespace to all resources.
-namespace: flomesh-system
+namespace: flomesh
 
 # Value of this field is prepended to the
 # names of all resources, e.g. a deployment named
 # "wordpress" becomes "alices-wordpress".
 # Note that it should also match with the prefix (text before '-') of the namespace
 # field above.
-namePrefix: flomesh-
+#namePrefix: flomesh-
+nameSuffix: -fsm
 
 # Labels to add to all resources and selectors.
 #commonLabels:
-#  someName: someValue
+#  app.flomesh.io/name: pipy-operator
+#  app.flomesh.io/version: v0.4.2
+
 
 bases:
 - ../crd
@@ -30,7 +33,7 @@ bases:
 
 patchesStrategicMerge:
 # Protect the /metrics endpoint by putting it behind auth.
-# If you want your controller-manager to expose the /metrics
+# If you want your operator-manager to expose the /metrics
 # endpoint w/o any authn/z, please comment the following line.
 #- manager_auth_proxy_patch.yaml
 
@@ -80,14 +83,14 @@ vars:
   objref:
     kind: Service
     version: v1
-    name: pipy-sidecar-injector-service
+    name: proxy-injector-svc
   fieldref:
     fieldpath: metadata.namespace
 - name: INJECTOR_SERVICE_NAME
   objref:
     kind: Service
     version: v1
-    name: pipy-sidecar-injector-service
+    name: proxy-injector-svc
 #- name: CFG_SERVICE_NAMESPACE # namespace of the cfg service
 #  objref:
 #    kind: Service
