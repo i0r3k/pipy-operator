@@ -9,6 +9,5 @@ spec:
     targetPort: 9443
     protocol: TCP
   selector:
-    app.flomesh.io/control-plane: operator-manager
-    app.flomesh.io/name: pipy-operator
-    app.flomesh.io/instance: operator-manager
+    app.kubernetes.io/control-plane: operator-manager
+    app.kubernetes.io/instance: operator-manager

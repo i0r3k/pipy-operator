@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    app.flomesh.io/control-plane: operator-manager
+    app.kubernetes.io/control-plane: operator-manager
     flomesh.io/inject: "false"
   name: system
 ---
@@ -12,22 +12,19 @@ metadata:
   name: operator-manager
   namespace: system
   labels:
-    app.flomesh.io/control-plane: operator-manager
-    app.flomesh.io/name: pipy-operator
-    app.flomesh.io/instance: operator-manager
+    app.kubernetes.io/control-plane: operator-manager
+    app.kubernetes.io/instance: operator-manager
 spec:
   selector:
     matchLabels:
-      app.flomesh.io/control-plane: operator-manager
-      app.flomesh.io/name: pipy-operator
-      app.flomesh.io/instance: operator-manager
+      app.kubernetes.io/control-plane: operator-manager
+      app.kubernetes.io/instance: operator-manager
   replicas: 1
   template:
     metadata:
       labels:
-        app.flomesh.io/control-plane: operator-manager
-        app.flomesh.io/name: pipy-operator
-        app.flomesh.io/instance: operator-manager
+        app.kubernetes.io/control-plane: operator-manager
+        app.kubernetes.io/instance: operator-manager
     spec:
       containers:
       - command:

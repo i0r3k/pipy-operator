@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app.flomesh.io/control-plane: operator-manager
+    app.kubernetes.io/control-plane: operator-manager
   name: operator-manager-metrics-service
   namespace: system
 spec:
@@ -12,6 +12,6 @@ spec:
     protocol: TCP
     targetPort: https
   selector:
-    app.flomesh.io/control-plane: operator-manager
-    app.flomesh.io/name: pipy-operator
-    app.flomesh.io/instance: operator-manager
+    app.kubernetes.io/control-plane: operator-manager
+    app.kubernetes.io/name: pipy-operator
+    app.kubernetes.io/instance: operator-manager

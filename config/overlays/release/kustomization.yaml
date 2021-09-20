@@ -10,10 +10,10 @@ components:
 images:
 - name: operator-manager
   newName: flomesh/operator-manager
-  newTag: 0.4.2
+  newTag: 0.4.3
 - name: proxy-init
   newName: flomesh/proxy-init
-  newTag: 0.4.2
+  newTag: 0.4.3
 - name: proxy-injector
   newName: flomesh/proxy-injector
-  newTag: 0.4.2
+  newTag: 0.4.3

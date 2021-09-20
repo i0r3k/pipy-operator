@@ -9,5 +9,4 @@ spec:
     targetPort: 7443
     protocol: TCP
   selector:
-    app.flomesh.io/name: pipy-operator
-    app.flomesh.io/instance: proxy-injector
+    app.kubernetes.io/instance: proxy-injector

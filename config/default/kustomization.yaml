@@ -10,9 +10,9 @@ namespace: flomesh
 nameSuffix: -fsm
 
 # Labels to add to all resources and selectors.
-#commonLabels:
-#  app.flomesh.io/name: pipy-operator
-#  app.flomesh.io/version: v0.4.2
+commonLabels:
+  app.kubernetes.io/name: pipy-operator
+#  app.kubernetes.io/version: v0.4.2
 
 
 bases:

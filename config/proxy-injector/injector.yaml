@@ -4,19 +4,16 @@ metadata:
   name: proxy-injector
   namespace: system
   labels:
-    app.flomesh.io/name: pipy-operator
-    app.flomesh.io/instance: proxy-injector
+    app.kubernetes.io/instance: proxy-injector
 spec:
   selector:
     matchLabels:
-      app.flomesh.io/name: pipy-operator
-      app.flomesh.io/instance: proxy-injector
+      app.kubernetes.io/instance: proxy-injector
   replicas: 1
   template:
     metadata:
       labels:
-        app.flomesh.io/name: pipy-operator
-        app.flomesh.io/instance: proxy-injector
+        app.kubernetes.io/instance: proxy-injector
     spec:
       containers:
       - name: webhook
